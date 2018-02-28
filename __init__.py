@@ -1,5 +1,2 @@
-import partA
+# import partA
 import partB
-
-partA()
-partB()

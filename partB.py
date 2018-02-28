@@ -8,7 +8,15 @@ graphData = GraphData.GraphData("data/Data_Highschool.txt")
 print("done")
 
 G = graphData.getGraphObj()
-print(G.number_of_edges())
 
-Gt = graphData.getGraphAtTime(10)
+for i in range(1,10):
+    Gt = graphData.getGraphAtTime(i)
+    graphData.plotGraph(Gt)
+    print(Gt.number_of_edges())
+    print(Gt.number_of_nodes())
+
+Gt = graphData.getGraphAtTime(7595);
+
 print(Gt.number_of_edges())
+print(Gt.number_of_nodes())
+
