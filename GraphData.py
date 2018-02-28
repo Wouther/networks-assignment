@@ -21,9 +21,24 @@ class GraphData:
                 # print(",", row)
                 self.graphObj.add_node(row[0])
                 self.graphObj.add_node(row[1])
-                self.graphObj.add_edge(row[0], row[1], time=row[2])
+                self.graphObj.add_edge(row[0], row[1], time=int(row[2]))
 
         return True  # TODO don't always return true
+
+    def getGraphAtTime(self, t):
+        # Initialize with empty graph (all nodes, no links)
+        graphAtTime = self.graphObj.copy()
+        graphAtTime.remove_edges_from(nx.edges(graphAtTime))
+
+        # Add edges before time t
+        edgesBeforeTime = nx.get_edge_attributes(graphAtTime, 'time') # get all edges with a 'time' attribute
+        for edge in edgesBeforeTime.copy():
+            if int(edgesBeforeTime[edge]) > t:
+                # print(int(edgesAfterTime[edge]))
+                del edgesBeforeTime[edge] # TODO does not work yet, only keeps a single edge (?!)
+        graphAtTime.add_edges_from(edgesBeforeTime)
+
+        return graphAtTime
 
     def plotGraph(self):
         print("plotting graph")
