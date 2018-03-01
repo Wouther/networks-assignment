@@ -1,6 +1,7 @@
 import csv
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy
 
 class GraphData:
     fileName = ""
@@ -95,12 +96,24 @@ class GraphData:
     def plotInfectionsOverTime(self, infectionLists):
         print("plotting infections over time")
         fig, ax = plt.subplots()
-        if not type(infectionLists.values()) is dict:
+        if not type(list(infectionLists.values())[0]) is dict:
             # Plot single line
             ax.plot(infectionLists.keys(), infectionLists.values())
         else:
             # Plot expectation and variance
-            print("TODO") # TODO
+            infectionListEnsemble = {}
+            for seedNode,infectionList in infectionLists.items():
+                for t,infections in infectionList.items():
+                    if not t in infectionListEnsemble:
+                        infectionListEnsemble[t] = []
+                    infectionListEnsemble[t].append(infections)
+            infectionListExpectation = {}
+            infectionListStDev       = {}
+            for t,infections in infectionListEnsemble.items():
+                infectionListExpectation[t] = numpy.average(infections)
+                infectionListStDev[t]       = numpy.sqrt(numpy.var(infections))
+            ax.errorbar(infectionListExpectation.keys(), infectionListExpectation.values(),
+                        yerr=infectionListStDev.values(), capsize=4)
         ax.set(xlabel='time [timestep]', ylabel='infections',
                title='Infections over time')
         ax.grid()

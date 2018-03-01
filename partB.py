@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
-gData = GraphData.GraphData("data/Data_Dummy.txt", 10)
+gData = GraphData.GraphData("data/Data_Highschool.txt")
+# gData = GraphData.GraphData("data/Data_Dummy.txt", 10)
+
 # gInst = gData.loadInstantGraphs()
 # gAgg = gData.loadAggregatedGraph()
 
@@ -23,7 +25,10 @@ gData = GraphData.GraphData("data/Data_Dummy.txt", 10)
 # print(Gt.number_of_edges())
 # print(Gt.number_of_nodes())
 
-infectionList = gData.getInfectionsOverTime(3)
-gData.plotInfectionsOverTime(infectionList)
+infectionLists = {}
+for i in range(1,10):
+    seedNode = i # TODO randomize?
+    infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
+gData.plotInfectionsOverTime(infectionLists)
 
 print("done")
