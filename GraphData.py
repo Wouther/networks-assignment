@@ -10,14 +10,15 @@ class GraphData:
     graphAgg = nx.Graph()
 
     def __init__(self, fileName):
-        print("constructing new GraphData instance from file", fileName)
         self.loadFile(fileName)
 
     def loadFile(self, fileName):
+        print("constructing new GraphData instance from file", fileName)
         # TODO check if file exists and is valid csv file
         self.fileName = fileName
 
     def loadInstantGraphs(self):
+        print("loading instant graphs")
         self.insGraphs = {0: nx.empty_graph()}
         for timeIndex in range(1, self.maxTime+1):
             self.insGraphs[timeIndex] = nx.empty_graph()
@@ -32,6 +33,7 @@ class GraphData:
         return self.graphAgg
 
     def loadAggregatedGraph(self):
+        print("loading aggregated graph")
         self.graphAgg = nx.empty_graph()
         # TODO check if file exists and is valid csv file
         with open(self.fileName, 'r') as dataFile:
@@ -43,18 +45,12 @@ class GraphData:
                     self.graphAgg.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
         return self.graphAgg
 
-    def instantGraph(self, time):
+    def getInstantGraphs(self, time):
         return self.insGraphs[time]
 
-    # self.instantGraph = nx.graph()
-    # next(self.fileName)  # skip first line
-    # for row in self.file:
-    #     # If the edge was added at time t, add it to the graph
-    #     if int(row[2]) == time:
-    #         self.instantGraph.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
-    # return self.instantGraph
-
     def getInfectionsOverTime(self, seedNode):
+        print("getting infections over time with seed node", seedNode)
+
         infectedList = {}
 
         if not self.graphAgg:
@@ -70,32 +66,27 @@ class GraphData:
         nx.set_node_attributes(infectionGraph[0], True, 'infected') # infect seed node (value irrelevant)
 
         for t in range(0, self.maxTime):
-            # Copy already infected nodes from previous timestamp
             if not t == 0:
+                # Stop if all nodes already infected
+                if infectedList[t-1] == self.graphAgg.number_of_nodes():
+                    print("all nodes infected at timestep", t-1, "/", self.maxTime)
+                    for i in range(t-1, self.maxTime + 1):
+                        infectedList[i] = infectedList[t-1]
+                    break
+
+                # Copy already infected nodes from previous timestamp
                 for infectedNode in nx.get_node_attributes(infectionGraph[t-1], 'infected'):
                     # nx.set_node_attributes(infectionGraph[t], True, 'infected')
                     infectionGraph[t].add_node(infectedNode, infected=True)
 
-            # allInfectedNodes = nx.get_node_attributes(infectionGraph[t], 'infected') # get all currently infected nodes
-            # nx.set_node_attributes(infectionGraph[t], True, 'infected')
-            # nx.neighbors()
-
             # Infect new nodes
             infectedNodes = nx.get_node_attributes(infectionGraph[t], 'infected')
-            if len(infectedNodes) == self.graphAgg.number_of_nodes():
-                break
             for infectedNode in infectedNodes:
                 for susceptibleNode in infectionGraph[t].neighbors(infectedNode): # nx.all_neighbors(infectionGraph[t], infectedNode):
                     infectionGraph[t].add_node(susceptibleNode, infected=True)
 
             # Count infected nodes
             infectedList[t] = len(nx.get_node_attributes(infectionGraph[t], 'infected'))
-
-        print("Infection stopped spreading at time",t,"/",self.maxTime)
-
-        # Saturate infections for rest of time
-        for i in range(t,self.maxTime+1):
-            infectedList[i] = infectedList[t-1]
 
         return infectedList
 
@@ -104,8 +95,9 @@ class GraphData:
     #  the infectionlist), the expected value and variance of all infectionLists are plotted
     #  instead. [TODO implement]
     def plotInfectionsOverTime(self, infectionLists):
+        print("plotting infections over time")
         fig, ax = plt.subplots()
-        if not type(infectionLists) is dict:
+        if not type(infectionLists.values()) is dict:
             # Plot single line
             ax.plot(infectionLists.keys(), infectionLists.values())
         else:

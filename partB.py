@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
-print("initializing")
 gData = GraphData.GraphData("data/Data_Highschool.txt")
-# print('loading instant graphs')
 # gInst = gData.loadInstantGraphs()
 # gAgg = gData.loadAggregatedGraph()
 
@@ -25,8 +23,7 @@ gData = GraphData.GraphData("data/Data_Highschool.txt")
 # print(Gt.number_of_edges())
 # print(Gt.number_of_nodes())
 
-print('getting infections over time')
-infectionList = gData.getInfectionsOverTime(150)
+infectionList = gData.getInfectionsOverTime(50)
 gData.plotInfectionsOverTime(infectionList)
 
 print("done")
