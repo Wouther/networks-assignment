@@ -5,17 +5,15 @@ import networkx as nx
 class GraphData:
     fileName = ""
     graphObj = nx.Graph()
-    maxTime = 7375
+    maxTime = 0
     insGraphs = []
     graphAgg = nx.Graph()
 
-    def __init__(self, fileName):
-        self.loadFile(fileName)
-
-    def loadFile(self, fileName):
-        print("constructing new GraphData instance from file", fileName)
-        # TODO check if file exists and is valid csv file
+    def __init__(self, fileName, maxTime=7375):
+        print("initializing GraphData object from file", fileName, "upto time", maxTime)
+        # TODO check if file exists
         self.fileName = fileName
+        self.maxTime  = maxTime
 
     def loadInstantGraphs(self):
         print("loading instant graphs")
