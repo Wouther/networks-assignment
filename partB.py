@@ -27,7 +27,7 @@ gData = GraphData.GraphData("data/Data_Highschool.txt")
 
 infectionLists = {}
 for i in range(1,10):
-    seedNode = i # TODO randomize?
+    seedNode = numpy.random.randint(1,gData.getAggregatedGraph().number_of_nodes()+1)
     infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
 gData.plotInfectionsOverTime(infectionLists)
 

@@ -29,6 +29,8 @@ class GraphData:
         return self.insGraphs
     
     def getAggregatedGraph(self):
+        if not self.graphAgg:
+            self.loadAggregatedGraph()
         return self.graphAgg
 
     def loadAggregatedGraph(self):
@@ -100,7 +102,7 @@ class GraphData:
             # Plot single line
             ax.plot(infectionLists.keys(), infectionLists.values())
         else:
-            # Plot expectation and variance
+            # Calculate expectation and variance
             infectionListEnsemble = {}
             for seedNode,infectionList in infectionLists.items():
                 for t,infections in infectionList.items():
@@ -112,12 +114,20 @@ class GraphData:
             for t,infections in infectionListEnsemble.items():
                 infectionListExpectation[t] = numpy.average(infections)
                 infectionListStDev[t]       = numpy.sqrt(numpy.var(infections))
-            ax.errorbar(infectionListExpectation.keys(), infectionListExpectation.values(),
-                        yerr=infectionListStDev.values(), capsize=4)
+
+            # Plot
+            errMinus = infectionListExpectation.copy()
+            errPlus  = infectionListExpectation.copy()
+            for t in infectionListExpectation:
+                errMinus[t] -= infectionListStDev[t]
+                errPlus[t]  += infectionListStDev[t]
+            plt.plot(infectionListExpectation.keys(), infectionListExpectation.values())
+            plt.fill_between(infectionListExpectation.keys(),
+                             list(errMinus.values()), list(errPlus.values()),
+                             facecolor='blue', alpha=0.15)
         ax.set(xlabel='time [timestep]', ylabel='infections',
                title='Infections over time')
         ax.grid()
-        # fig.savefig("output.png")
         plt.show()
 
     def plotGraph(self):
