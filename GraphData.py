@@ -9,6 +9,7 @@ class GraphData:
     maxTime = 0
     insGraphs = []
     graphAgg = nx.Graph()
+    infected80 = False;
 
     def __init__(self, fileName, maxTime=7375):
         print("initializing GraphData object from file", fileName, "upto time", maxTime)
@@ -68,6 +69,13 @@ class GraphData:
 
         for t in range(0, self.maxTime):
             if not t == 0:
+
+                # Print the index if the 80% of the nodes have been infected
+                infectedNumber = 0.8*self.graphAgg.number_of_nodes();
+                if infectedList[t - 1] >= infectedNumber and self.infected80 == False:
+                    print("80% of the nodes infected at time ", t-1)
+                    self.infected80 = True
+
                 # Stop if all nodes already infected
                 if infectedList[t-1] == self.graphAgg.number_of_nodes():
                     print("all nodes infected at timestep", t-1, "/", self.maxTime)
@@ -84,7 +92,8 @@ class GraphData:
             infectedNodes = nx.get_node_attributes(infectionGraph[t], 'infected')
             for infectedNode in infectedNodes:
                 for susceptibleNode in infectionGraph[t].neighbors(infectedNode): # nx.all_neighbors(infectionGraph[t], infectedNode):
-                    infectionGraph[t].add_node(susceptibleNode, infected=True)
+                    if not susceptibleNode in infectedNodes:
+                        infectionGraph[t].add_node(susceptibleNode, infected=True)
 
             # Count infected nodes
             infectedList[t] = len(nx.get_node_attributes(infectionGraph[t], 'infected'))
