@@ -1,10 +1,10 @@
-import GraphData
+import TemporalGraph
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
 print("initializing")
-graphData = GraphData.GraphData("data/Data_Highschool.txt")
+graphData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
 print("done")
 
 G = graphData.getGraphObj()

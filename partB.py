@@ -1,9 +1,9 @@
-import GraphData
+import TemporalGraph
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
-gData = GraphData.GraphData("data/Data_Highschool.txt")
+gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
 # gData = GraphData.GraphData("data/Data_Dummy.txt", 10)
 
 # gInst = gData.loadInstantGraphs()
@@ -34,6 +34,6 @@ gData = GraphData.GraphData("data/Data_Highschool.txt")
 infectionLists = {}
 seedNode = 213
 infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
-# gData.plotInfectionsOverTime(infectionLists)
+gData.plotInfectionsOverTime(infectionLists)
 
 print("done")

@@ -3,51 +3,49 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
-class GraphData:
+class TemporalGraph:
     fileName = ""
+
+    maxTime = 0 # maximum timestamp
+    insGraphs = {} # instant graphs (graph <value> at each time instant <key>)
+    aggGraph  = nx.Graph()
+
     graphObj = nx.Graph()
-    maxTime = 0
-    insGraphs = []
-    graphAgg = nx.Graph()
-    infected80 = False;
+
+    infected80 = False
 
     def __init__(self, fileName, maxTime=7375):
-        print("initializing GraphData object from file", fileName, "upto time", maxTime)
+        print("initializing TemporalGraph object from file", fileName, "upto time", maxTime)
         # TODO check if file exists
         self.fileName = fileName
         self.maxTime  = maxTime
+        self.loadGraphs()
 
-    def loadInstantGraphs(self):
-        print("loading instant graphs")
+    # Loads instant graphs and aggregated graph from data file.
+    def loadGraphs(self):
+        print("loading instant graphs and aggregated graph")
         self.insGraphs = {0: nx.empty_graph()}
+        self.aggGraph = nx.Graph()
         for timeIndex in range(1, self.maxTime+1):
             self.insGraphs[timeIndex] = nx.empty_graph()
         with open(self.fileName, 'r') as dataFile:
-            dbCSV = csv.reader(dataFile, delimiter='\t', quotechar='"')
-            next(dbCSV)  # skip first line
-            for row in dbCSV:
+            dataObj = csv.reader(dataFile, delimiter='\t', quotechar='"')
+            next(dataObj)  # skip first line
+            for row in dataObj:
                 self.insGraphs[int(row[2])].add_edge(int(row[0]), int(row[1]), t=int(row[2]))
-        return self.insGraphs
+
+                # Only add edge to aggregated graph if it doesn't exist yet
+                if not self.aggGraph.has_edge(int(row[0]), int(row[1])):
+                    self.aggGraph.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
+        return self
     
     def getAggregatedGraph(self):
-        if not self.graphAgg:
-            self.loadAggregatedGraph()
-        return self.graphAgg
+        return self.aggGraph
 
-    def loadAggregatedGraph(self):
-        print("loading aggregated graph")
-        self.graphAgg = nx.empty_graph()
-        # TODO check if file exists and is valid csv file
-        with open(self.fileName, 'r') as dataFile:
-            dbCSV = csv.reader(dataFile, delimiter='\t', quotechar='"')
-            next(dbCSV)  # skip first line
-            for row in dbCSV:
-                # If the two nodes were linked already, DO NOT add the new edge.
-                if not self.graphAgg.has_edge(int(row[0]), int(row[1])):
-                    self.graphAgg.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
-        return self.graphAgg
+    def getInstantGraphs(self):
+        return self.insGraphs
 
-    def getInstantGraphs(self, time):
+    def getInstantGraph(self, time):
         return self.insGraphs[time]
 
     def getInfectionsOverTime(self, seedNode):
@@ -55,7 +53,7 @@ class GraphData:
 
         infectedList = {}
 
-        if not self.graphAgg:
+        if not self.aggGraph:
             self.loadAggregatedGraph()
         if not self.insGraphs:
             self.loadInstantGraphs()
@@ -71,14 +69,14 @@ class GraphData:
             if not t == 0:
 
                 # Print the index if the 80% of the nodes have been infected
-                infectedNumber = 0.8*self.graphAgg.number_of_nodes();
+                infectedNumber = 0.8*self.aggGraph.number_of_nodes();
                 if infectedList[t - 1] >= infectedNumber and self.infected80 == False:
                     print("80% of the nodes infected at time ", t-1)
                     self.infected80 = True
 
                 # Stop if all nodes already infected
-                if infectedList[t-1] == self.graphAgg.number_of_nodes():
-                    print("all nodes infected at timestep", t-1, "/", self.maxTime)
+                if infectedList[t-1] == self.aggGraph.number_of_nodes():
+                    print("all nodes infected at timestamp", t-1, "/", self.maxTime)
                     for i in range(t-1, self.maxTime + 1):
                         infectedList[i] = infectedList[t-1]
                     break
@@ -134,7 +132,7 @@ class GraphData:
             plt.fill_between(infectionListExpectation.keys(),
                              list(errMinus.values()), list(errPlus.values()),
                              facecolor='blue', alpha=0.15)
-        ax.set(xlabel='time [timestep]', ylabel='infections',
+        ax.set(xlabel='time [timestamp]', ylabel='infections',
                title='Infections over time')
         ax.grid()
         plt.show()
@@ -152,9 +150,9 @@ class GraphData:
 
     def plotGraphAgg(self):
         print("plotting graph")
-        print(list(self.graphAgg.edges()))
+        print(list(self.aggGraph.edges()))
         plt.figure(figsize=(8, 8))
-        nx.draw_networkx(self.graphAgg, pos=nx.circular_layout(self.graphAgg), node_size=5)
+        nx.draw_networkx(self.aggGraph, pos=nx.circular_layout(self.aggGraph), node_size=5)
         # plt.xlim(-0.05, 1.05)
         # plt.ylim(-0.05, 1.05)
         plt.axis('off')
