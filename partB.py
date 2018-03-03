@@ -2,7 +2,7 @@ import TemporalGraph
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
-from operator import itemgetter
+import math
 import GraphMetric
 
 # gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
@@ -52,11 +52,18 @@ C = GraphMetric.sortKeyByDescVal(clusteringList)
 print("Nodes ranked by degree (possibly same influence):", D)
 print("Nodes ranked by clustering coefficient (possibly same influence):", C)
 
-
-
-# infectionLists = {}
-# seedNode = 5 # 213
-# infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
-# gData.plotInfectionsOverTime(infectionLists)
+# Nodes ranked by their recognition rate (TODO correctly calculated?)
+def recognitionRate(f, R, D):
+    numRf = math.ceil(N*f)
+    Rf = R[0:numRf+1]
+    Df = D[0:numRf+1]
+    return len(set(Rf) & set(Df)) / numRf
+rRD = {}
+for f in numpy.arange(0.05,0.55,0.05): # fraction ("top-f recognition rate")
+    rRD[f] = recognitionRate(f, R, D)
+    print("recognition rate for f =", f,":", rRD[f])
+fig, ax = GraphMetric.plotLine(rRD)
+ax.set(title="Recognition rate for different top-fractions", ylabel='recognition rate rRD', xlabel='top-fraction f')
+plt.show()
 
 print("done")
