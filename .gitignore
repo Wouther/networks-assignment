@@ -100,3 +100,7 @@ ENV/
 # mypy
 .mypy_cache/
 .idea/
+TemporalGraph_REMOTE_5892.py
+TemporalGraph_LOCAL_5892.py
+TemporalGraph.py.orig
+TemporalGraph_BASE_5892.py

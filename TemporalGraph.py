@@ -2,6 +2,7 @@ import csv
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
+import GraphMetric
 
 class TemporalGraph:
     fileName = ""
@@ -11,6 +12,8 @@ class TemporalGraph:
     insGraphs = {} # instant graphs (graph <value> at each time instant <key>)
     aggGraph  = nx.Graph()
     graphObj = nx.Graph()
+
+    seedNode   = -1
     infected80 = False
 
     def __init__(self, fileName, maxTime=7375):
@@ -50,13 +53,9 @@ class TemporalGraph:
 
     def getInfectionsOverTime(self, seedNode):
         print("getting infections over time with seed node", seedNode)
+        self.seedNode = seedNode
 
         infectedList = {}
-
-        if not self.aggGraph:
-            self.loadAggregatedGraph()
-        if not self.insGraphs:
-            self.loadInstantGraphs()
 
         infectionGraph = self.insGraphs.copy() # instantiate with instant graphs
 
@@ -106,41 +105,11 @@ class TemporalGraph:
     # Plot number of infections over time. If the argument is a single infectionList, that is
     #  plotted as a line. If it is a dict of infectionLists (keyed by the seedNode with value
     #  the infectionlist), the expected value and variance of all infectionLists are plotted
-    #  instead. [TODO implement]
+    #  instead.
     def plotInfectionsOverTime(self, infectionLists):
         print("plotting infections over time")
-        fig, ax = plt.subplots()
-        if not type(list(infectionLists.values())[0]) is dict:
-            # Plot single line
-            ax.plot(infectionLists.keys(), infectionLists.values())
-        else:
-            # Calculate expectation and variance
-            infectionListEnsemble = {}
-            for seedNode,infectionList in infectionLists.items():
-                for t,infections in infectionList.items():
-                    if not t in infectionListEnsemble:
-                        infectionListEnsemble[t] = []
-                    infectionListEnsemble[t].append(infections)
-            infectionListExpectation = {}
-            infectionListStDev       = {}
-            for t,infections in infectionListEnsemble.items():
-                infectionListExpectation[t] = numpy.average(infections)
-                infectionListStDev[t]       = numpy.sqrt(numpy.var(infections))
-
-            # Plot
-            errMinus = infectionListExpectation.copy()
-            errPlus  = infectionListExpectation.copy()
-            for t in infectionListExpectation:
-                errMinus[t] -= infectionListStDev[t]
-                errPlus[t]  += infectionListStDev[t]
-   
-            plt.plot(infectionListExpectation.keys(), infectionListExpectation.values())
-            plt.fill_between(infectionListExpectation.keys(),
-                             list(errMinus.values()), list(errPlus.values()),
-                             facecolor='blue', alpha=0.15)
-        ax.set(xlabel='time [timestamp]', ylabel='infections',
-               title='Infections over time')
-        ax.grid()
+        fig, ax = GraphMetric.plot(infectionLists)
+        ax.set(title="Infections over time (%d seed nodes)" % len(infectionLists), ylabel='infections')
         plt.show()
 
     def plotGraph(self):
