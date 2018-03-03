@@ -102,27 +102,8 @@ class TemporalGraph:
     #  instead.
     def plotInfectionsOverTime(self, infectionLists):
         print("plotting infections over time")
-
-        infectionListExpectation, infectionListStdDev = GraphMetric.ensembleStatistics(infectionLists)
-
-        fig, ax = plt.subplots()
-        if GraphMetric.isSingleSeries(infectionLists):
-            # Plot single line
-            ax.plot(infectionLists.keys(), infectionLists.values())
-        else:
-            # Plot expectation and variance
-            errMinus = infectionListExpectation.copy()
-            errPlus  = infectionListExpectation.copy()
-            for t in infectionListExpectation:
-                errMinus[t] -= infectionListStdDev[t]
-                errPlus[t]  += infectionListStdDev[t]
-            plt.plot(infectionListExpectation.keys(), infectionListExpectation.values())
-            plt.fill_between(infectionListExpectation.keys(),
-                             list(errMinus.values()), list(errPlus.values()),
-                             facecolor='blue', alpha=0.15)
-        ax.set(xlabel='time [timestamp]', ylabel='infections',
-               title='Infections over time')
-        ax.grid()
+        fig, ax = GraphMetric.plot(infectionLists)
+        ax.set(title="Infections over time (%d seed nodes)" % len(infectionLists), ylabel='infections')
         plt.show()
 
     def plotGraph(self):

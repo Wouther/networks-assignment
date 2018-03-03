@@ -25,15 +25,15 @@ gData = TemporalGraph.TemporalGraph("data/Data_Dummy.txt", 10)
 # print(Gt.number_of_edges())
 # print(Gt.number_of_nodes())
 
-# infectionLists = {}
-# for i in range(1,10):
-#     seedNode = numpy.random.randint(1,gData.getAggregatedGraph().number_of_nodes()+1)
-#     infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
-# gData.plotInfectionsOverTime(infectionLists)
-
 infectionLists = {}
-seedNode = 5 # 213
-infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
+for i in range(1,4):
+    seedNode = numpy.random.randint(1,gData.getAggregatedGraph().number_of_nodes()+1)
+    infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
 gData.plotInfectionsOverTime(infectionLists)
+
+# infectionLists = {}
+# seedNode = 5 # 213
+# infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
+# gData.plotInfectionsOverTime(infectionLists)
 
 print("done")
