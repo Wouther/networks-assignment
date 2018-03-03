@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy
 
-gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
-# gData = GraphData.GraphData("data/Data_Dummy.txt", 10)
+# gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
+gData = TemporalGraph.TemporalGraph("data/Data_Dummy.txt", 10)
 
 # gInst = gData.loadInstantGraphs()
 # gAgg = gData.loadAggregatedGraph()
@@ -32,7 +32,7 @@ gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
 # gData.plotInfectionsOverTime(infectionLists)
 
 infectionLists = {}
-seedNode = 213
+seedNode = 5 # 213
 infectionLists[seedNode] = gData.getInfectionsOverTime(seedNode)
 gData.plotInfectionsOverTime(infectionLists)
 
