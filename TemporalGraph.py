@@ -7,11 +7,10 @@ class TemporalGraph:
     fileName = ""
 
     maxTime = 0 # maximum timestamp
+    N = 0 #number of nodes of the aggregated graph
     insGraphs = {} # instant graphs (graph <value> at each time instant <key>)
     aggGraph  = nx.Graph()
-
     graphObj = nx.Graph()
-
     infected80 = False
 
     def __init__(self, fileName, maxTime=7375):
@@ -37,6 +36,7 @@ class TemporalGraph:
                 # Only add edge to aggregated graph if it doesn't exist yet
                 if not self.aggGraph.has_edge(int(row[0]), int(row[1])):
                     self.aggGraph.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
+        self.N = self.aggGraph.number_of_nodes();
         return self
     
     def getAggregatedGraph(self):
@@ -65,17 +65,22 @@ class TemporalGraph:
             infectionGraph[0].add_node(seedNode)
         nx.set_node_attributes(infectionGraph[0], True, 'infected') # infect seed node (value irrelevant)
 
+
+
         for t in range(0, self.maxTime):
+            if t == 0 and self.infected80 == True:
+                self.infected80 = False;
+
             if not t == 0:
 
                 # Print the index if the 80% of the nodes have been infected
-                infectedNumber = 0.8*self.aggGraph.number_of_nodes();
+                infectedNumber = 0.8*self.N;
                 if infectedList[t - 1] >= infectedNumber and self.infected80 == False:
                     print("80% of the nodes infected at time ", t-1)
                     self.infected80 = True
 
                 # Stop if all nodes already infected
-                if infectedList[t-1] == self.aggGraph.number_of_nodes():
+                if infectedList[t-1] == self.N:
                     print("all nodes infected at timestamp", t-1, "/", self.maxTime)
                     for i in range(t-1, self.maxTime + 1):
                         infectedList[i] = infectedList[t-1]
@@ -128,6 +133,7 @@ class TemporalGraph:
             for t in infectionListExpectation:
                 errMinus[t] -= infectionListStDev[t]
                 errPlus[t]  += infectionListStDev[t]
+   
             plt.plot(infectionListExpectation.keys(), infectionListExpectation.values())
             plt.fill_between(infectionListExpectation.keys(),
                              list(errMinus.values()), list(errPlus.values()),
