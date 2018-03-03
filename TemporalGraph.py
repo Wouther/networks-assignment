@@ -1,7 +1,6 @@
 import csv
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy
 import GraphMetric
 
 class TemporalGraph:
@@ -14,7 +13,6 @@ class TemporalGraph:
     graphObj = nx.Graph()
 
     seedNode   = -1
-    infected80 = False
 
     def __init__(self, fileName, maxTime=7375):
         print("initializing TemporalGraph object from file", fileName, "upto time", maxTime)
@@ -55,6 +53,8 @@ class TemporalGraph:
         self.seedNode = seedNode
 
         infectedList = {}
+        infected80   = None
+        infectedThreshold = 0.8 * self.aggGraph.number_of_nodes()
 
         infectionGraph = self.insGraphs.copy() # instantiate with instant graphs
 
@@ -65,13 +65,6 @@ class TemporalGraph:
 
         for t in range(0, self.maxTime):
             if not t == 0:
-
-                # Print the index if the 80% of the nodes have been infected
-                infectedNumber = 0.8*self.aggGraph.number_of_nodes();
-                if infectedList[t - 1] >= infectedNumber and self.infected80 == False:
-                    print("80% of the nodes infected at time ", t-1)
-                    self.infected80 = True
-
                 # Stop if all nodes already infected
                 if infectedList[t-1] == self.aggGraph.number_of_nodes():
                     print("all nodes infected at timestamp", t-1, "/", self.maxTime)
@@ -94,7 +87,12 @@ class TemporalGraph:
             # Count infected nodes
             infectedList[t] = len(nx.get_node_attributes(infectionGraph[t], 'infected'))
 
-        return infectedList
+            # Register when 80% of nodes have been infected
+            if not infected80 and infectedList[t] >= infectedThreshold:
+                print("80% of the nodes infected at time ", t)
+                infected80 = t
+
+        return infectedList, infected80
 
     # Plot number of infections over time. If the argument is a single infectionList, that is
     #  plotted as a line. If it is a dict of infectionLists (keyed by the seedNode with value
@@ -112,6 +110,7 @@ class TemporalGraph:
 
         plt.figure(figsize=(8, 8))
         nx.draw_networkx(self.graphObj, pos=nx.circular_layout(self.graphObj), node_size=5)
+        # nx.draw_networkx(g, pos=nx.circular_layout(g), node_size=5)
         # plt.xlim(-0.05, 1.05)
         # plt.ylim(-0.05, 1.05)
         plt.axis('off')
@@ -122,14 +121,6 @@ class TemporalGraph:
         print(list(self.aggGraph.edges()))
         plt.figure(figsize=(8, 8))
         nx.draw_networkx(self.aggGraph, pos=nx.circular_layout(self.aggGraph), node_size=5)
-        # plt.xlim(-0.05, 1.05)
-        # plt.ylim(-0.05, 1.05)
-        plt.axis('off')
-        plt.show()
-
-    def plotGraph(self, g):
-        print("plotting graph")
-        nx.draw_networkx(g, pos=nx.circular_layout(g), node_size=5)
         # plt.xlim(-0.05, 1.05)
         # plt.ylim(-0.05, 1.05)
         plt.axis('off')

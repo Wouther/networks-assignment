@@ -131,3 +131,10 @@ def plotMinMax(ensMin, ensMax, fig=None):
 #     # plt.ylim(-0.05, 1.05)
 #     plt.axis('off')
 #     plt.show()
+
+# Sorts a dictionaries values and returns a list of its keys in that sorted order.
+# E.g. obtain a list of nodes sorted according to a metric.
+def sortKeyByAscVal(series):
+    return sorted(list(series.keys()),key=series.get)
+def sortKeyByDescVal(series):
+    return sorted(list(series.keys()),key=series.get, reverse=True)
