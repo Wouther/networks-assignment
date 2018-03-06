@@ -5,6 +5,7 @@
 
 import numpy
 import matplotlib.pyplot as plt
+from math import ceil
 
 def isSingleSeries(series):
     return not type(list(series.values())[0]) is dict
@@ -54,7 +55,7 @@ def plot(series, minMax = False):
         fig, ax = plotMinMax(ensMin, ensMax)
     return fig, ax
 
-def plotLine(series, fig=None):
+def plotLine(series: object, fig: object = None) -> object:
     isNewFigure = not fig
     if isNewFigure:
         fig, ax = plt.subplots()
@@ -138,3 +139,12 @@ def sortKeyByAscVal(series):
     return sorted(list(series.keys()),key=series.get)
 def sortKeyByDescVal(series):
     return sorted(list(series.keys()),key=series.get, reverse=True)
+
+
+# Nodes ranked by their recognition rate
+# Nodes sharing a top ranking position in two metric sets
+def recognitionRate(fraction, A, B, N):
+    fN = ceil(N * fraction)
+    Atop = A[0:fN + 1]
+    Btop = B[0:fN + 1]
+    return len(set(Atop) & set(Btop)) / fN

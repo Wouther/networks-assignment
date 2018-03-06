@@ -1,2 +1,3 @@
 # import partA
-import partB
+# import partB
+import partC
