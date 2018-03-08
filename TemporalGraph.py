@@ -84,7 +84,14 @@ class TemporalGraph:
 
                 # Only add edge to aggregated graph if it doesn't exist yet
                 if not self.aggGraph.has_edge(nodeI, nodeJ):
+                    # Register time when nodes are first connected by an edge
+                    for node in (nodeI, nodeJ):
+                        if not self.aggGraph.has_node(node):
+                            self.aggGraph.add_node(node, t=timeStamp)
+
+                    # Register time when edge was first added
                     self.aggGraph.add_edge(nodeI, nodeJ, t=timeStamp)
+
         return self
 
     def getAggregatedGraph(self):
