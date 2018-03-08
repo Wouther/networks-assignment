@@ -69,16 +69,22 @@ class TemporalGraph:
             dataObj = csv.reader(dataFile, delimiter='\t', quotechar='"')
             next(dataObj)  # skip first line
             for row in dataObj:
-                self.no1.append(int(row[0]))
-                self.no2.append(int(row[1]))
-                self.timeStamps.append(int(row[2]))
-                self.insGraphs[self.timeStamps[-1]].add_edge(self.no1[-1],
-                                                             self.no2[-1],
-                                                             t=self.timeStamps[-1])
+                nodeI, nodeJ, timeStamp = [int(i) for i in row]
+
+                # print("Loading graphs for timestamp %d / %d" % (timeStamp, self.maxTime))
+
+                # Skip line if outside the time limit
+                if timeStamp > self.maxTime:
+                    continue
+
+                self.no1.append(nodeI)
+                self.no2.append(nodeJ)
+                self.timeStamps.append(timeStamp)
+                self.insGraphs[timeStamp].add_edge(nodeI, nodeJ, t=timeStamp)
 
                 # Only add edge to aggregated graph if it doesn't exist yet
-                if not self.aggGraph.has_edge(int(row[0]), int(row[1])):
-                    self.aggGraph.add_edge(int(row[0]), int(row[1]), t=int(row[2]))
+                if not self.aggGraph.has_edge(nodeI, nodeJ):
+                    self.aggGraph.add_edge(nodeI, nodeJ, t=timeStamp)
         return self
 
     def getAggregatedGraph(self):
