@@ -4,10 +4,11 @@ import networkx as nx
 import numpy
 
 print("initializing")
-graphData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
+gData = TemporalGraph.TemporalGraph("data/Data_Highschool.txt")
+# gData = TemporalGraph.TemporalGraph("data/Data_Dummy.txt", 10)
 print("done")
 
-G = graphData.getGraphObj()
+G = gData.getAggregatedGraph()
 
 N = G.number_of_nodes()
 L = G.number_of_edges()
@@ -22,10 +23,39 @@ degree_sequence = [d for n, d in G.degree()]
 print("Average degree   \tE(D) =", numpy.average(degree_sequence))
 print("Degree variance  \tVar(D) =", numpy.var(degree_sequence))
 
-# n, bins, patches = plt.hist(d_hist)
-n, bins, patches = plt.hist(degree_sequence, 50, normed=1, facecolor='green', alpha=0.75)
-# plt.plot(range(1, len(degree_distrib) + 1), degree_distrib)
-# l = plt.plot(bins, patches, 'r--', linewidth=1)
+degree_hist = nx.degree_histogram(G)
+# format to be able to plot:
+degree_hist_i = list(range(0, len(degree_hist)))
+degree_hist_val = []
+for i,val in enumerate(degree_hist):
+    degree_hist_val.append(val)
+sumVals = sum(degree_hist_val)
+for i,val in enumerate(degree_hist_val):
+    degree_hist_val[i] = val / sumVals # normalize
+
+# histogram:
+plt.hist(degree_sequence, len(degree_hist), normed=1, alpha=0.75)
+ax = plt.gca()
+ax.set(xlabel='degree k', ylabel='P(D=k)', title='Degree distribution of nodes')
+ax.grid(which='both')
+plt.show()
+
+# scatterplot, regular axes:
+# fig = plt.figure()
+# ax = plt.gca()
+# ax.plot(degree_hist_i, degree_hist_val, 'o', alpha=0.75, markeredgecolor='none')
+# ax.set(xlabel='degree k', ylabel='P(D=k)', title='Degree distribution of nodes')
+# ax.grid(which='both')
+# plt.show()
+
+# scatterplot, loglog axes:
+fig = plt.figure()
+ax = plt.gca()
+ax.set_yscale('log')
+ax.set_xscale('log')
+ax.plot(degree_hist_i, degree_hist_val, 'o', alpha=0.75, markeredgecolor='none')
+ax.set(xlabel='degree k', ylabel='P(D=k)', title='Degree distribution of nodes')
+ax.grid(which='both')
 plt.show()
 
 print("Degree assortativity  \trho_D =", nx.degree_assortativity_coefficient(G))
