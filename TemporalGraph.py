@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import GraphMetric
 import copy
+import pickle
 from random import shuffle
 from random import randint
 
@@ -14,7 +15,8 @@ class TemporalGraph:
     insGraphs = {0: nx.empty_graph()}  # instant graphs (graph <value> at each time instant <key>)
     G2 = {0: nx.empty_graph()}
     G3star = {0: nx.empty_graph()}
-    G3 = nx.Graph()
+    G3 = {0: nx.empty_graph()}
+    G3_agg = nx.Graph()
     aggGraph = nx.Graph()
     graphObj = nx.Graph()
 
@@ -23,7 +25,6 @@ class TemporalGraph:
     timeStamps = []
     shuffledNodes1 = []
     shuffledNodes2 = []
-
 
     seedNode = -1
 
@@ -36,6 +37,8 @@ class TemporalGraph:
 
     # Load shuffled temporal network G2 (Part C)
     def loadShuffledGraphs(self):
+        addedNodes = [0] * (self.maxTime + 1)
+        # how many nodes have been added at each timestamp
         print("loading shuffled temporal graph")
 
         # shuffles the edges (node1-node2 couples) without changing the corresponding time stamps
@@ -43,25 +46,37 @@ class TemporalGraph:
         shuffle(zippedNodes)
         self.shuffledNodes1, self.shuffledNodes2 = zip(*zippedNodes)
 
+        # instantiate the empty time graphs
         for timeIndex in range(1, self.maxTime + 1):
             self.G2[timeIndex] = nx.empty_graph()
             self.G3star[timeIndex] = nx.empty_graph()
-        for row in range(len(self.no1)):
-            self.G2[self.timeStamps[row]].add_edge(self.shuffledNodes1[row],
-                                                          self.shuffledNodes2[row],
-                                                          t=self.timeStamps[row])
+            self.G3[timeIndex] = nx.empty_graph()
 
-            rndIndex = randint(0, len(zippedNodes)-1)
+        # add the shuffled edges to the graphs
+        # keeping the previous timestamps
+        for row_num in range(len(self.no1)):
+            self.G2[self.timeStamps[row_num]].add_edge(self.shuffledNodes1[row_num],
+                                                       self.shuffledNodes2[row_num],
+                                                       t=self.timeStamps[row_num])
+
+            rndIndex = randint(0, len(zippedNodes) - 1)
             rndEdge = zippedNodes[rndIndex]
-            self.G3star[self.timeStamps[row]].add_edge(*rndEdge, t=self.timeStamps[row])
+            self.G3star[self.timeStamps[row_num]].add_edge(*rndEdge, t=self.timeStamps[row_num])
 
             # Only add edge to shuffled aggregated graph if it doesn't exist yet
-            if not self.G3.has_edge(*rndEdge):
-                self.G3.add_edge(*rndEdge, t=self.timeStamps[row])
-        return self
+            if not self.G3_agg.has_edge(*rndEdge):
+                for node in rndEdge:
+                    if not self.G3_agg.has_node(node):
+                        addedNodes[self.timeStamps[row_num]] += 1
+                self.G3_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
+                # Register time when nodes are first connected by an edge
+
+        return addedNodes
 
     # Loads instant graphs and aggregated graph from data file.
     def loadGraphs(self):
+        addedNodes = [0] * (self.maxTime + 1)
+        endReading = False
         print("loading instant graphs and aggregated graph")
         for timeIndex in range(1, self.maxTime + 1):
             self.insGraphs[timeIndex] = nx.empty_graph()
@@ -69,28 +84,30 @@ class TemporalGraph:
             dataObj = csv.reader(dataFile, delimiter='\t', quotechar='"')
             next(dataObj)  # skip first line
             for row in dataObj:
-                nodeI, nodeJ, timeStamp = [int(i) for i in row]
+                if not endReading:
+                    nodeI, nodeJ, timeStamp = [int(i) for i in row]
 
-                # print("Loading graphs for timestamp %d / %d" % (timeStamp, self.maxTime))
+                    # print("Loading graphs for timestamp %d / %d" % (timeStamp, self.maxTime))
 
-                # Skip line if outside the time limit
-                if timeStamp > self.maxTime:
-                    continue
+                    # Skip line if outside the time limit
+                    if timeStamp > self.maxTime:
+                        endReading = True
+                        continue
 
-                self.no1.append(nodeI)
-                self.no2.append(nodeJ)
-                self.timeStamps.append(timeStamp)
-                self.insGraphs[timeStamp].add_edge(nodeI, nodeJ, t=timeStamp)
+                    self.no1.append(nodeI)
+                    self.no2.append(nodeJ)
+                    self.timeStamps.append(timeStamp)
+                    self.insGraphs[timeStamp].add_edge(nodeI, nodeJ, t=timeStamp)
 
-                # Only add edge to aggregated graph if it doesn't exist yet
-                if not self.aggGraph.has_edge(nodeI, nodeJ):
-                    # Register time when nodes are first connected by an edge
-                    for node in (nodeI, nodeJ):
-                        if not self.aggGraph.has_node(node):
-                            self.aggGraph.add_node(node, t=timeStamp)
-
-                    # Register time when edge was first added
-                    self.aggGraph.add_edge(nodeI, nodeJ, t=timeStamp)
+                    # Only add edge to aggregated graph if it doesn't exist yet
+                    if not self.aggGraph.has_edge(nodeI, nodeJ):
+                        # Register time when nodes are first connected by an edge
+                        for node in (nodeI, nodeJ):
+                            if not self.aggGraph.has_node(node):
+                                addedNodes[timeStamp] += 1
+                                self.aggGraph.add_node(node, t=timeStamp)
+                        # Register as "edge time" the time when the edge was first added
+                        self.aggGraph.add_edge(nodeI, nodeJ, t=timeStamp)
 
         return self
 
@@ -112,27 +129,27 @@ class TemporalGraph:
     def getG3star(self):
         return self.G3star
 
-    def getInfectionsOverTime(self, seedNode):
+    def getInfectionsOverTime(self, seedNode, tempGraph, aggrGraph, infectedPercentage=0.8):
         # print("getting infections over time with seed node", seedNode)
         self.seedNode = seedNode
 
         infectedList = {}
-        timeInfected80 = None
-        infectedThreshold = 0.8 * self.aggGraph.number_of_nodes()
-
-        # infectionGraph = self.insGraphs.copy()
-        # BUG: both point to the same dictionary! https://stackoverflow.com/questions/2465921/how-to-copy-a-dictionary-and-only-edit-the-copy
-        infectionGraph = copy.deepcopy(self.insGraphs)  # instantiate with instant graphs
+        timeInfected80 = None  # timestamp at which the 80% of the nodes is infected
+        infectedThreshold = round(infectedPercentage * aggrGraph.number_of_nodes())
+        infectionGraph = []
+        infectionGraph.append(copy.deepcopy(tempGraph[0]))  # instantiate with instant graphs
 
         # add SEED NODE to instant graph at time=0. It is the only element of that graph.
-        if not infectionGraph[0].has_node(seedNode):
-            infectionGraph[0].add_node(seedNode)
+        infectionGraph[0].add_node(seedNode)
         nx.set_node_attributes(infectionGraph[0], True, 'infected')  # infect seed node (value irrelevant)
 
         for t in range(0, self.maxTime):
+            # if timeInfected80 is None:  # less than 80% of the nodes are infected yet
             if not t == 0:
+                # copy new time graph
+                infectionGraph.append(copy.deepcopy(tempGraph[t]))
                 # Stop if all nodes already infected
-                if infectedList[t - 1] == self.aggGraph.number_of_nodes():
+                if infectedList[t - 1] == aggrGraph.number_of_nodes():
                     print("all nodes infected at timestamp", t - 1, "/", self.maxTime)
                     for i in range(t - 1, self.maxTime + 1):
                         infectedList[i] = infectedList[t - 1]
@@ -146,16 +163,16 @@ class TemporalGraph:
             # Infect new nodes
             infectedNodes = nx.get_node_attributes(infectionGraph[t], 'infected')
             for infectedNode in infectedNodes:
-                for susceptibleNode in infectionGraph[t].neighbors(
-                        infectedNode):  # nx.all_neighbors(infectionGraph[t], infectedNode):
-                    if not susceptibleNode in infectedNodes:
+                # nx.all_neighbors(infectionGraph[t], infectedNode):
+                for susceptibleNode in infectionGraph[t].neighbors(infectedNode):
+                    if susceptibleNode not in infectedNodes:
                         infectionGraph[t].add_node(susceptibleNode, infected=True)
 
             # Count infected nodes
             infectedList[t] = len(nx.get_node_attributes(infectionGraph[t], 'infected'))
 
             # Register when 80% of nodes have been infected
-            if not timeInfected80 and infectedList[t] >= infectedThreshold:
+            if timeInfected80 is None and infectedList[t] >= infectedThreshold:
                 print("Node: ", seedNode, "infects the 80% at time ", t)
                 timeInfected80 = t
 
@@ -165,16 +182,53 @@ class TemporalGraph:
 
         return infectedList, timeInfected80
 
-    #  Plot number of infections over time. If the argument is a single infectionList, that is
-    #  plotted as a line. If it is a dict of infectionLists (keyed by the seedNode with value
-    #  the infectionlist), the expected value and variance of all infectionLists are plotted
-    #  instead.
-    def plotInfectionsOverTime(self, infectionLists):
+    def evaluateInfections(self, gAgg, gInsts, fileName, seedMax, writeNewFile=False):
+        # the number of nodes IS NOT the index of the last node
+        N = gAgg.number_of_nodes()
+        infectionLists = {}
+        infected80 = {}
+
+        if writeNewFile:
+            # Use each node as seed node to spread infection (question 9)
+            seedNodesNumber = N + 1
+
+            print("Getting infections over time for %d seed nodes" % (seedNodesNumber - 1))
+            for i in range(1, seedMax + 1):
+                # print("Getting infections over time with seed node %d / %d" % (i, seedNodesNumber - 1))
+                if not gAgg.has_node(i):
+                    continue
+                seedNode = i
+                infectionLists[seedNode], infected80[seedNode] = self.getInfectionsOverTime(seedNode, gInsts, gAgg)
+
+            # Saving the objects:
+            with open(fileName, 'wb') as f:  # Python 3: open(..., 'wb')
+                print('Writing on file %s' % fileName)
+                pickle.dump([infectionLists, infected80], f)
+        else:
+            try:
+                # Getting back the objects:
+                with open(fileName, 'rb') as f:  # Python 3: open(..., 'rb')
+                    print('Reading from file %s' % fileName)
+                    infectionLists, infected80 = pickle.load(f)
+            except IOError:
+                print('FATAL ERROR: The file with the infected list could not be found.')
+
+        return infectionLists, infected80
+
+    @staticmethod
+    def plotInfectionsOverTime(infectionLists, graphName='G'):
+
+        #  Plot number of infections over time. If the argument is a single infectionList, that is
+        #  plotted as a line. If it is a dict of infectionLists (keyed by the seedNode with value
+        #  the infectionlist), the expected value and variance of all infectionLists are plotted
+        #  instead.
+
         print("plotting infections over time")
         fig, ax = GraphMetric.plot(infectionLists)
-        ax.set(title="Infections over time (%d seed nodes)" % len(infectionLists), ylabel='infections')
+        ax.set(title="Infections over time (%d seed nodes), graph %s" % (len(infectionLists), graphName),
+               ylabel='I(t)')
         plt.show()
-
+        return
 
     def plotGraph(self, g):
         print("plotting graph")
