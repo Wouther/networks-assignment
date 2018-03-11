@@ -64,7 +64,7 @@ def plotLine(series: object, fig: object = None, lineLabel=None) -> object:
     if isNewFigure:
         fig, ax = plt.subplots()
     else:
-        ax = fig.get_axes()[0]  # TODO correct?
+        ax = fig.get_axes()[0]
 
     # Plot single line
     plt.plot(series.keys(), series.values(), label=lineLabel, )
@@ -195,8 +195,8 @@ def evaluateMetrics(N, seedMax, maxTime, R, gInstantaneous, gAgg):
             if not thisGraph.has_node(n):
                 continue
 
-            tDist = abs(t - gAgg.nodes[n]['t'])  # temporal distance since the first appearance
-            temporalDegreeList[n] += thisGraph.degree(n) / (tDist + 1) ** 2  # plus 1 to avoid division by zero
+            # tDist = abs(t - gAgg.nodes[n]['t'])  # temporal distance since the first appearance
+            # temporalDegreeList[n] += thisGraph.degree(n) / (tDist + 1) ** 2  # plus 1 to avoid division by zero
             temporalDegreeList2[n] += thisGraph.degree(n) / (t ** 2 + t)
             temporalDegreeList3[n] += thisGraph.degree(n) / t ** 1.5
 
@@ -240,7 +240,7 @@ def evaluateMetrics(N, seedMax, maxTime, R, gInstantaneous, gAgg):
     rRTD4 = {}  # influence / degree with temporal weights
     rRTD5 = {}  # influence / degree with temporal weights
 
-    for f in numpy.arange(0.05, 0.55, 0.0125):  # fraction ("top-f recognition rate")
+    for f in numpy.arange(0.05, 0.505, 0.005):  # fraction ("top-f recognition rate")
         rRD[f] = recognitionRate(f, R, D, N)
         rRD2[f] = recognitionRate(f, R, D2, N)
         rRC[f] = recognitionRate(f, R, C, N)

@@ -5,60 +5,64 @@ import numpy as np
 
 # INFLUENCE OF TEMPORAL NETWORK FEATURES ON INFORMATION SPREADING
 
-graphName = 'G2_tris'
-fileName = "infection_lists_%s.pkl" % graphName
-
 # gData = tg.TemporalGraph("data/Data_Dummy.txt", 10)
 gData = tg.TemporalGraph("data/Data_Highschool.txt")
 
 # ## G2 has many more new nodes on the first timeStamps
 listNewNodes = gData.loadGraphs()
-listNewNodesShuffled = gData.loadShuffledGraphs(readAggregate=False)
+listNewNodesG2 = gData.loadShuffledGraphs(readAggregate=False)
+listNewNodesG3 = gData.loadG3()
 
-a = gData.splitAggregate( gData.getAggregatedGraph() )
-print(a)
+tempCut = listNewNodesG3[:gData.maxTime-7300]
+plt.bar(range(len(tempCut)), tempCut, align='center')
+plt.title('New nodes per time instant, G3')
+# plt.xticks(range(len(temporalDegreeList)), list(temporalDegreeList.keys()))
+plt.savefig("newNodesG3.png")
 
-# tempCut2 = listNewNodes[:gData.maxTime-7300]
-# plt.bar(range(len(tempCut2)), tempCut2, align='center')
-# plt.title('New nodes graph G2')
-# # plt.xticks(range(len(temporalDegreeList)), list(temporalDegreeList.keys()))
-# plt.show()
-
-
-G3_added_list = gData.loadG3star()
-
-G3_temporal = gData.splitAggregate(gData.getG3())
-
-# # randomized temporal graphs: same edges as in Gdata, but timestamps are shuffled
-# G2 = gData.getG2()
-# # Timestamps are randomly reassigned to the edges.
-# #  An edge can be assigned no time stamps, or multiple time stamps.
-# G3star = gData.getG3star()
-# # Aggregated graph based on G3star, built in the same way as the original aggregated graph.
-# G3 = gData.getG3()
-
-# # how come the two average temporal degree are different?
-# # also, the randomized graph always shows lower temporal degree.
-# # maybe it's because on the same timeStamp the same edge is assigned twice.
+# how come the two average temporal degree are different?
+# also, the randomized graph always shows lower temporal degree.
+# maybe it's because on the same timeStamp the same edge is assigned twice.
 # deg1 = 0
 # deg2 = 0
+# deg3 = 0
 # for t in range(1, gData.maxTime + 1):
 #     deg1 += np.mean([degree for key, degree in gData.getG2atTime(t).degree()]) / gData.maxTime
 #     deg2 += np.mean([degree for key, degree in gData.getInstantGraph(t).degree()]) / gData.maxTime
-# print('shuffled ', deg1)
-# print('original ', deg2)
+#     deg3 += np.mean([degree for key, degree in gData.getG3()[t].degree()]) / gData.maxTime
+#
+# print('g3 ', deg3)
+# print('g2 ', deg1)
+# print('g ', deg2)
 
 # gAggregate = gData.getAggregatedGraph()
 # gInstantaneous = gData.getG2()
 # g3_agg = gData.getG3agg()
-# seedMax = max(gData.getG2agg().nodes().items())[0]
+seedMax = max(gData.getG3agg().nodes().items())[0]
 # N = gData.getG2agg().number_of_nodes()
 #
 # # average degree: np.mean( [d for n, d in g3_agg.degree()] )
-# writeNewFile = True
-# infectionLists, infected80 = gData.evaluateInfections(gData.getG2agg(), gData.getG2(), fileName, seedMax, writeNewFile)
+
+# ######################################################
+# writeNewFile = False
 #
-# gData.plotInfectionsOverTime(infectionLists, graphName)
+# graphName = 'G'
+# fileName = "infection_lists_%s.pkl" % graphName
+# infectionLists_G, infected80_G = gData.evaluateInfections(gData.getAggregatedGraph(), gData.getInstantGraphs(), fileName, seedMax, writeNewFile)
+# # gData.plotInfectionsOverTime(infectionLists_G, graphName)
+#
+# graphName = 'G2'
+# fileName = "infection_lists_%s.pkl" % graphName
+# infectionLists_G2, infected80_G2 = gData.evaluateInfections(gData.getG2agg(), gData.getG2(), fileName, seedMax, writeNewFile)
+# # gData.plotInfectionsOverTime(infectionLists_G2, graphName)
+#
+# graphName = 'G3'
+# fileName = "infection_lists_%s.pkl" % graphName
+# infectionLists_G3, infected80_G3 = gData.evaluateInfections(gData.getG3agg(), gData.getG3(), fileName, seedMax, writeNewFile)
+# # gData.plotInfectionsOverTime(infectionLists_G3, graphName)
+#
+# # plt.show()
+#
+# ############################################################3
 
 # temporalDegreeList = {}
 # temporalDegreeList_uw = {}
@@ -118,29 +122,31 @@ G3_temporal = gData.splitAggregate(gData.getG3())
 #
 # print(shuff, old)
 #
-# # # Nodes ranked by influence when seed node (question 10)
-# # R = gm.sortKeyByAscVal(infected80)
-# # print("Nodes ranked by influence when seed node (possibly same influence):", R)
-# #
-# #
-# # rRD, rRD2, rRC, rRB2, rRTD, rRTD2, rRTD3, rRTD4, rRTD5 = gm.evaluateMetrics(N, seedMax,gData.maxTime,
-# #                                                                             R, gInstantaneous, gAggregate)
-# #
-# # fig, ax = gm.plotLine(rRD, lineLabel='degree')
-# # # gm.plotLine(rRD2, fig, 'degree 2')
-# # gm.plotLine(rRC, fig, 'clustering coefficient')
-# # # gm.plotLine(rRC2, fig)
-# # gm.plotLine(rRB2, fig, 'betweenness')
-# # # gm.plotLine(rRTD, fig, 'temporal degree')
-# # gm.plotLine(rRTD2, fig, 'Temporal degree')
-# # # gm.plotLine(rRTD3, fig, 'temporal degree 1.5 linear weight')
+# Nodes ranked by influence when seed node (question 10)
+# graphName = 'G1'
+# R = gm.sortKeyByAscVal(infected80_G)
+# print("Nodes ranked by influence when seed node (possibly same influence):", R)
+#
+# rRD, rRD2, rRC, rRB2, rRTD, rRTD2, rRTD3, rRTD4, rRTD5 = gm.evaluateMetrics(seedMax, seedMax,gData.maxTime,
+#                                                                             R, gData.getInstantGraphs(),
+#                                                                             gData.getAggregatedGraph())
+#
+# fig, ax = gm.plotLine(rRD, lineLabel='Degree')
+# # gm.plotLine(rRD2, fig, 'degree 2')
+# gm.plotLine(rRC, fig, 'Clustering coefficient')
+# gm.plotLine(rRB2, fig, 'Betweenness')
+# # gm.plotLine(rRTD, fig, 'temporal degree')
+# gm.plotLine(rRTD2, fig, 'Temporal degree')
+# # gm.plotLine(rRTD3, fig, 'temporal degree 1.5 linear weight')
 # # gm.plotLine(rRTD4, fig, 'Only new nodes temporal degree')
-# # # gm.plotLine(rRTD5, fig, 'new temporal degree linear weight')
-# #
-# # ax.set(title="Recognition rate for different top-fractions, N=%d" % N,
-# #        ylabel='recognition rate',
-# #        xlabel='top-fraction f')
-# # ax.legend() # ('rRD', 'rRD2', 'rRC', 'rRB2', 'rRTD')
+# gm.plotLine(rRTD5, fig, 'Exclusive temporal degree')
+#
+# ax.set(title="Recognition rate for different top-fractions, %s" % graphName,
+#        ylabel='recognition rate',
+#        xlabel='top-fraction f')
+# ax.set_ylim(0,1)
+# ax.legend() # ('rRD', 'rRD2', 'rRC', 'rRB2', 'rRTD')
 # # plt.show()
+# plt.savefig("fig.png")
 
 print("End of part C.")

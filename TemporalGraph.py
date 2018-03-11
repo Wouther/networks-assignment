@@ -16,6 +16,8 @@ class TemporalGraph:
     G2 = {0: nx.empty_graph()}
     G3star = {0: nx.empty_graph()}
     G3 =  nx.Graph()
+    G3_agg = nx.Graph()
+
     G2_agg = nx.Graph()
     aggGraph = nx.Graph()
     graphObj = nx.Graph()
@@ -35,7 +37,7 @@ class TemporalGraph:
         self.maxTime = maxTime
         # self.loadGraphs()
 
-    # Load shuffled temporal network G2 (Part C)
+    # Load shuffled temporal network G2 and G2 aggregate(Part C)
     def loadShuffledGraphs(self, readAggregate = False):
         addedNodes = [0] * (self.maxTime + 1)
         # how many nodes have been added at each timestamp
@@ -49,8 +51,6 @@ class TemporalGraph:
         # instantiate the empty time graphs
         for timeIndex in range(1, self.maxTime + 1):
             self.G2[timeIndex] = nx.empty_graph()
-            # self.G3star[timeIndex] = nx.empty_graph()
-            # self.G3[timeIndex] = nx.empty_graph()
 
         # add the shuffled edges to the graphs
         # keeping the previous timestamps
@@ -71,18 +71,12 @@ class TemporalGraph:
                         addedNodes[self.timeStamps[row_num]] += 1
                 self.G2_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
                 # Register time when nodes are first connected by an edge
-        if not readAggregate:
-            print('Writing G2_agg to file...')
-            nx.write_edgelist(self.G2_agg, 'data/test_edgelistG2_agg.txt', data=['t'])
-
-        elif readAggregate:
-            print('Reading G2_agg from file...')
-            nx.read_edgelist(self.G2_agg, 'data/test_edgelistG3_agg.txt', data=['t'])
 
         return addedNodes
 
-    def loadG3star(self):
+    def loadG3(self):
         addedNodes = [0] * (self.maxTime + 1)
+        G3agg = nx.empty_graph()
         G3topology = list(copy.deepcopy(self.aggGraph).edges)
         for timeIndex in range(1, self.maxTime + 1):
             self.G3star[timeIndex] = nx.empty_graph()
@@ -96,14 +90,16 @@ class TemporalGraph:
                 self.G3star[timeStamp].add_edge(randomEdge[0], randomEdge[1], t=timeStamp)
 
                 # Only add edge to aggregated graph if it doesn't exist yet
-                if not self.G3.has_edge(randomEdge[0], randomEdge[1]):
+                if not self.G3_agg.has_edge(randomEdge[0], randomEdge[1]):
                     # Register time when nodes are first connected by an edge
                     for node in (randomEdge[0], randomEdge[1]):
-                        if not self.G3.has_node(node):
+                        if not self.G3_agg.has_node(node):
                             addedNodes[timeStamp] += 1
-                            self.G3.add_node(node, t=timeStamp)
+                            self.G3_agg.add_node(node, t=timeStamp)
                     # Register as "edge time" the time when the edge was first added
-                    self.G3.add_edge(randomEdge[0], randomEdge[1], t=timeStamp)
+                    self.G3_agg.add_edge(randomEdge[0], randomEdge[1], t=timeStamp)
+
+        self.G3 = self.splitAggregate(self.G3_agg)
 
         return addedNodes
 
@@ -175,7 +171,6 @@ class TemporalGraph:
 
     def getG2atTime(self, time):
         return self.G2[time]
-
 
     def getG3agg(self):
         return self.G3_agg
@@ -284,7 +279,6 @@ class TemporalGraph:
         fig, ax = GraphMetric.plot(infectionLists)
         ax.set(title="Infections over time (%d seed nodes), graph %s" % (len(infectionLists), graphName),
                ylabel='I(t)')
-        plt.show()
         return
 
     def plotGraph(self, g):
