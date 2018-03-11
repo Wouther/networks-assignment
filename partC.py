@@ -6,13 +6,17 @@ import numpy as np
 # INFLUENCE OF TEMPORAL NETWORK FEATURES ON INFORMATION SPREADING
 
 
-writeNewFile = False
-graphName = 'G2'
+writeNewFile = True
+graphName = 'G3'
 fileName = "infection_lists_%s.pkl" % graphName
 
 # gData = TemporalGraph.TemporalGraph("data/Data_Dummy.txt", 10)
 gData = tg.TemporalGraph("data/Data_Highschool.txt")
 listNewNodes = gData.loadShuffledGraphs()
+
+G3_added_list = gData.loadG3star()
+
+G3_temporal = gData.splitAggregate(gData.getG3())
 
 # # randomized temporal graphs: same edges as in Gdata, but timestamps are shuffled
 # G2 = gData.getG2()
@@ -25,20 +29,17 @@ listNewNodes = gData.loadShuffledGraphs()
 # gData.plotGraph(G3)
 # histogram:
 
-gAggregate = gData.getAggregatedGraph()
-gInstantaneous = gData.getG2()
 
-seedMax = max(gAggregate.nodes().items())[0]
-N = gAggregate.number_of_nodes()
+seedMax = max(gData.getG3().nodes().items())[0]
+N = gData.getG3().number_of_nodes()
 
-infectionLists, infected80 = gData.evaluateInfections(gAggregate, gInstantaneous, fileName, seedMax, writeNewFile)
+infectionLists, infected80 = gData.evaluateInfections(gData.getG3(), G3_temporal, fileName, seedMax, writeNewFile)
 
 gData.plotInfectionsOverTime(infectionLists, graphName)
 
 # Nodes ranked by influence when seed node (question 10)
 R = gm.sortKeyByAscVal(infected80)
 print("Nodes ranked by influence when seed node (possibly same influence):", R)
-
 
 rRD, rRD2, rRC, rRB2, rRTD, rRTD2, rRTD3, rRTD4, rRTD5 = gm.evaluateMetrics(N, seedMax,gData.maxTime,
                                                                             R, gInstantaneous, gAggregate)

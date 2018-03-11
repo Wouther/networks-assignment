@@ -15,8 +15,8 @@ class TemporalGraph:
     insGraphs = {0: nx.empty_graph()}  # instant graphs (graph <value> at each time instant <key>)
     G2 = {0: nx.empty_graph()}
     G3star = {0: nx.empty_graph()}
-    G3 = {0: nx.empty_graph()}
-    G3_agg = nx.Graph()
+    G3 =  nx.Graph()
+    G2_agg = nx.Graph()
     aggGraph = nx.Graph()
     graphObj = nx.Graph()
 
@@ -49,8 +49,8 @@ class TemporalGraph:
         # instantiate the empty time graphs
         for timeIndex in range(1, self.maxTime + 1):
             self.G2[timeIndex] = nx.empty_graph()
-            self.G3star[timeIndex] = nx.empty_graph()
-            self.G3[timeIndex] = nx.empty_graph()
+            # self.G3star[timeIndex] = nx.empty_graph()
+            # self.G3[timeIndex] = nx.empty_graph()
 
         # add the shuffled edges to the graphs
         # keeping the previous timestamps
@@ -61,17 +61,58 @@ class TemporalGraph:
 
             rndIndex = randint(0, len(zippedNodes) - 1)
             rndEdge = zippedNodes[rndIndex]
-            self.G3star[self.timeStamps[row_num]].add_edge(*rndEdge, t=self.timeStamps[row_num])
+            # self.G3star[self.timeStamps[row_num]].add_edge(*rndEdge, t=self.timeStamps[row_num])
 
             # Only add edge to shuffled aggregated graph if it doesn't exist yet
-            if not self.G3_agg.has_edge(*rndEdge):
+            if not self.G2_agg.has_edge(*rndEdge):
                 for node in rndEdge:
-                    if not self.G3_agg.has_node(node):
+                    if not self.G2_agg.has_node(node):
                         addedNodes[self.timeStamps[row_num]] += 1
-                self.G3_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
+                self.G2_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
                 # Register time when nodes are first connected by an edge
 
         return addedNodes
+
+    def loadG3star(self):
+        addedNodes = [0] * (self.maxTime + 1)
+        G3topology = list(copy.deepcopy(self.aggGraph).edges)
+        for timeIndex in range(1, self.maxTime + 1):
+            self.G3star[timeIndex] = nx.empty_graph()
+
+        with open(self.fileName, 'r') as dataFile:
+            dataObj = csv.reader(dataFile, delimiter='\t', quotechar='"')
+            next(dataObj)  # skip first line
+            for row in dataObj:
+                nodeI, nodeJ, timeStamp = [int(i) for i in row]
+                randomEdge = G3topology[randint(1, len(G3topology)-1)]
+                self.G3star[timeStamp].add_edge(randomEdge[0], randomEdge[1], t=timeStamp)
+
+                # Only add edge to aggregated graph if it doesn't exist yet
+                if not self.G3.has_edge(randomEdge[0], randomEdge[1]):
+                    # Register time when nodes are first connected by an edge
+                    for node in (randomEdge[0], randomEdge[1]):
+                        if not self.G3.has_node(node):
+                            addedNodes[timeStamp] += 1
+                            self.G3.add_node(node, t=timeStamp)
+                    # Register as "edge time" the time when the edge was first added
+                    self.G3.add_edge(randomEdge[0], randomEdge[1], t=timeStamp)
+
+        return addedNodes
+
+    def splitAggregate(self, aggregate):
+        timeGraphs = {0: nx.empty_graph()}  # instant graphs (graph <value> at each time instant <key>)
+
+        for timeIndex in range(1, self.maxTime + 1):
+            timeGraphs[timeIndex] = nx.empty_graph()
+
+        for edge in aggregate.edges():
+            nodeI, nodeJ, timeStamp = [int(i) for i in edge]
+
+        # Only add edge to aggregated graph if it doesn't exist yet
+        if not timeGraphs[timeStamp].has_edge(nodeI, nodeJ):
+            timeGraphs[timeStamp].add_edge(nodeI, nodeJ, t=timeStamp)
+
+        return timeGraphs
 
     # Loads instant graphs and aggregated graph from data file.
     def loadGraphs(self):
