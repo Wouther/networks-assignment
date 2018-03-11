@@ -187,7 +187,7 @@ def evaluateMetrics(N, seedMax, maxTime, R, gInstantaneous, gAgg):
         temporalDegreeList4[n] = 0
         temporalDegreeList5[n] = 0
 
-    oldNeighbors = [[0] for n in range(1, seedMax + 1)]
+    oldNeighbors = [[0] for n in range(0, seedMax + 1)]
 
     for t in range(1, maxTime + 1):  # for each timestamp
         thisGraph = gInstantaneous[t]
@@ -202,7 +202,7 @@ def evaluateMetrics(N, seedMax, maxTime, R, gInstantaneous, gAgg):
 
             if thisGraph.degree(n) != 0:
                 for neighbor in thisGraph.neighbors(n):
-                    if neighbor not in oldNeighbors[n]:
+                    if neighbor not in oldNeighbors[n] and n not in oldNeighbors[neighbor]:
                         oldNeighbors[n].append(neighbor)
                         temporalDegreeList4[n] += 1 / t ** 2
                         temporalDegreeList5[n] += 1 / t

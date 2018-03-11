@@ -17,6 +17,8 @@ class TemporalGraph:
     G3star = {0: nx.empty_graph()}
     G3 = {0: nx.empty_graph()}
     G3_agg = nx.Graph()
+    G2_agg = nx.Graph()
+
     aggGraph = nx.Graph()
     graphObj = nx.Graph()
 
@@ -33,15 +35,15 @@ class TemporalGraph:
         # TODO check if file exists
         self.fileName = fileName
         self.maxTime = maxTime
-        self.loadGraphs()
+        # self.loadGraphs()
 
     # Load shuffled temporal network G2 (Part C)
-    def loadShuffledGraphs(self):
+    def loadShuffledGraphs(self, readAggregate = False):
         addedNodes = [0] * (self.maxTime + 1)
         # how many nodes have been added at each timestamp
         print("loading shuffled temporal graph")
 
-        # shuffles the edges (node1-node2 couples) without changing the corresponding time stamps
+        # shuffles the edges (node1-node2 couples) leaving the corresponding time stamps in their place
         zippedNodes = list(zip(self.no1, self.no2))
         shuffle(zippedNodes)
         self.shuffledNodes1, self.shuffledNodes2 = zip(*zippedNodes)
@@ -49,8 +51,8 @@ class TemporalGraph:
         # instantiate the empty time graphs
         for timeIndex in range(1, self.maxTime + 1):
             self.G2[timeIndex] = nx.empty_graph()
-            self.G3star[timeIndex] = nx.empty_graph()
-            self.G3[timeIndex] = nx.empty_graph()
+            # self.G3star[timeIndex] = nx.empty_graph()
+            # self.G3[timeIndex] = nx.empty_graph()
 
         # add the shuffled edges to the graphs
         # keeping the previous timestamps
@@ -58,18 +60,26 @@ class TemporalGraph:
             self.G2[self.timeStamps[row_num]].add_edge(self.shuffledNodes1[row_num],
                                                        self.shuffledNodes2[row_num],
                                                        t=self.timeStamps[row_num])
+            # rndIndex = randint(0, len(zippedNodes) - 1)
+            # rndEdge = zippedNodes[rndIndex]
+            # self.G3star[self.timeStamps[row_num]].add_edge(*rndEdge, t=self.timeStamps[row_num])
 
-            rndIndex = randint(0, len(zippedNodes) - 1)
-            rndEdge = zippedNodes[rndIndex]
-            self.G3star[self.timeStamps[row_num]].add_edge(*rndEdge, t=self.timeStamps[row_num])
+            rndEdge = zippedNodes[row_num]
 
             # Only add edge to shuffled aggregated graph if it doesn't exist yet
-            if not self.G3_agg.has_edge(*rndEdge):
+            if not readAggregate and not self.G2_agg.has_edge(*rndEdge):
                 for node in rndEdge:
-                    if not self.G3_agg.has_node(node):
+                    if not self.G2_agg.has_node(node):
                         addedNodes[self.timeStamps[row_num]] += 1
-                self.G3_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
+                self.G2_agg.add_edge(*rndEdge, t=self.timeStamps[row_num])
                 # Register time when nodes are first connected by an edge
+        if not readAggregate:
+            print('Writing G2_agg to file...')
+            nx.write_edgelist(self.G2_agg, 'data/test_edgelistG2_agg.txt', data=['t'])
+
+        elif readAggregate:
+            print('Reading G2_agg from file...')
+            nx.read_edgelist(self.G2_agg, 'data/test_edgelistG3_agg.txt', data=['t'])
 
         return addedNodes
 
@@ -86,8 +96,6 @@ class TemporalGraph:
             for row in dataObj:
                 if not endReading:
                     nodeI, nodeJ, timeStamp = [int(i) for i in row]
-
-                    # print("Loading graphs for timestamp %d / %d" % (timeStamp, self.maxTime))
 
                     # Skip line if outside the time limit
                     if timeStamp > self.maxTime:
@@ -109,7 +117,7 @@ class TemporalGraph:
                         # Register as "edge time" the time when the edge was first added
                         self.aggGraph.add_edge(nodeI, nodeJ, t=timeStamp)
 
-        return self
+        return addedNodes
 
     def getAggregatedGraph(self):
         return self.aggGraph
@@ -122,6 +130,16 @@ class TemporalGraph:
 
     def getG2(self):
         return self.G2
+
+    def getG2agg(self):
+        return self.G2_agg
+
+    def getG2atTime(self, time):
+        return self.G2[time]
+
+
+    def getG3agg(self):
+        return self.G3_agg
 
     def getG3(self):
         return self.G3
@@ -193,7 +211,7 @@ class TemporalGraph:
             seedNodesNumber = N + 1
 
             print("Getting infections over time for %d seed nodes" % (seedNodesNumber - 1))
-            for i in range(1, seedMax + 1):
+            for i in range(1, seedMax + 1 ):
                 # print("Getting infections over time with seed node %d / %d" % (i, seedNodesNumber - 1))
                 if not gAgg.has_node(i):
                     continue
@@ -240,3 +258,21 @@ class TemporalGraph:
         # plt.ylim(-0.05, 1.05)
         plt.axis('off')
         plt.show()
+
+    def splitAggregate(self, aggregate):
+        timeGraphs = {0: nx.empty_graph()}  # instant graphs (graph <value> at each time instant <key>)
+
+        for timeIndex in range(1, self.maxTime + 1):
+            timeGraphs[timeIndex] = nx.empty_graph()
+
+        for edge in aggregate.edges(data='t'):
+            nodeI, nodeJ, timeStamp = [int(i) for i in edge]
+
+            # Only add edge to aggregated graph if it doesn't exist yet
+            if not timeGraphs[timeStamp].has_edge(nodeI, nodeJ):
+                timeGraphs[timeStamp].add_edge(nodeI, nodeJ, t=timeStamp)
+
+        return timeGraphs
+
+
+
