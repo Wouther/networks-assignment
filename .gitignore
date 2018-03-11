@@ -104,3 +104,4 @@ infection_lists_G2_bis.pkl
 data/test_edgelistG2_agg.txt
 infection_lists_G2_tris.pkl
 data/test_edgelistG3_agg.txt
+*.orig

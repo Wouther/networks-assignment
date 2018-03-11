@@ -31,12 +31,12 @@ fig, ax = gm.plotLine(rRD, lineLabel='degree, rRD')
 # gm.plotLine(rRD2, fig, 'degree 2')
 gm.plotLine(rRC, fig, 'clustering coefficient, rRC')
 # gm.plotLine(rRC2, fig)
-gm.plotLine(rRB2, fig, 'betweenness, rRB')
-# gm.plotLine(rRTD, fig, 'temporal degree')
-gm.plotLine(rRTD2, fig, 'Temporal degree, rRTD')
-# gm.plotLine(rRTD3, fig, 'temporal degree 1.5 linear weight')
-gm.plotLine(rRTD4, fig, 'Only new nodes temporal degree, rRTD2')
-# gm.plotLine(rRTD5, fig, 'new temporal degree linear weight')
+gm.plotLine(rRB2, fig, 'betweenness')
+gm.plotLine(rRTD, fig, 'temporal degree tDist')
+gm.plotLine(rRTD2, fig, 'Temporal degree')
+gm.plotLine(rRTD3, fig, 'temporal degree 1.5 linear weight')
+gm.plotLine(rRTD4, fig, 'Only new nodes temporal degree')
+gm.plotLine(rRTD5, fig, 'new temporal degree linear weight')
 
 ax.set(title="Recognition rate for different top-fractions, N=%d" % N,
        ylabel='Average recognition rate',

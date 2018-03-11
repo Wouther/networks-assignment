@@ -25,6 +25,10 @@ print(a)
 # plt.show()
 
 
+G3_added_list = gData.loadG3star()
+
+G3_temporal = gData.splitAggregate(gData.getG3())
+
 # # randomized temporal graphs: same edges as in Gdata, but timestamps are shuffled
 # G2 = gData.getG2()
 # # Timestamps are randomly reassigned to the edges.
